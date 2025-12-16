@@ -1,9 +1,9 @@
-import Image from "next/image";
+import { Header } from "@/components/header";
 
 export default function Home() {
   return (
-    <main>
-      Hello World
-    </main>
+    <div className="dark min-h-screen">
+      <Header />
+    </div>
   );
 }
