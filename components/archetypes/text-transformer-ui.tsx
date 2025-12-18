@@ -8,38 +8,34 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import type { ToolUIProps } from "@/types/tool.types"
 import { Copy, Check, Loader2, Sparkles, ArrowRight } from "lucide-react"
+import { processAgentRequest } from "@/lib/api-client"
 
 export function TextTransformerUI({ toolId, toolTitle, toolDescription }: ToolUIProps) {
   const [input, setInput] = useState("")
   const [output, setOutput] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleProcess = async () => {
     if (!input.trim()) return
 
     setIsProcessing(true)
     setOutput("")
+    setError(null)
 
     try {
-      const response = await fetch(`/api/tools/${toolId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          toolId,
-          data: { input },
-        }),
-      })
+      const result = await processAgentRequest(toolId, input)
 
-      const result = await response.json()
-
-      if (result.success) {
-        setOutput(result.data.output || JSON.stringify(result.data, null, 2))
+      if (result.success && result.content) {
+        setOutput(result.content)
       } else {
-        setOutput(`Error: ${result.error}`)
+        setError(result.error || "Processing failed")
+        setOutput("")
       }
-    } catch (error) {
-      setOutput(`Error: ${error instanceof Error ? error.message : "Processing failed"}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred")
+      setOutput("")
     } finally {
       setIsProcessing(false)
     }
@@ -55,6 +51,7 @@ export function TextTransformerUI({ toolId, toolTitle, toolDescription }: ToolUI
   const handleClear = () => {
     setInput("")
     setOutput("")
+    setError(null)
   }
 
   return (
@@ -67,6 +64,7 @@ export function TextTransformerUI({ toolId, toolTitle, toolDescription }: ToolUI
               Input
             </Label>
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={handleClear}
@@ -89,6 +87,7 @@ export function TextTransformerUI({ toolId, toolTitle, toolDescription }: ToolUI
             <span className="text-sm font-medium text-muted-foreground">{input.length} characters</span>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
+                type="button"
                 onClick={handleProcess}
                 disabled={!input.trim() || isProcessing}
                 className="gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-md hover:shadow-lg"
@@ -123,6 +122,7 @@ export function TextTransformerUI({ toolId, toolTitle, toolDescription }: ToolUI
               Result
             </Label>
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={handleCopy}
@@ -156,6 +156,23 @@ export function TextTransformerUI({ toolId, toolTitle, toolDescription }: ToolUI
                   <div className="text-center">
                     <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary" />
                     <p className="text-sm font-medium text-muted-foreground">Processing your request...</p>
+                    <p className="text-xs text-muted-foreground mt-2">Connecting to AI backend</p>
+                  </div>
+                </motion.div>
+              ) : error ? (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex h-full items-center justify-center"
+                >
+                  <div className="text-center max-w-md">
+                    <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                      <span className="text-2xl">⚠️</span>
+                    </div>
+                    <p className="text-sm font-medium text-destructive mb-2">Backend Connection Error</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{error}</p>
                   </div>
                 </motion.div>
               ) : output ? (

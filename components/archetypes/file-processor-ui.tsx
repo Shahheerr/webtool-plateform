@@ -9,12 +9,14 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import type { ToolUIProps } from "@/types/tool.types"
 import { Upload, Download, FileIcon, X, Loader2, CheckCircle, AlertCircle } from "lucide-react"
+import { processFileRequest } from "@/lib/api-client"
 
 interface ProcessedFile {
   name: string
   size: number
   url: string
   status: "processing" | "complete" | "error"
+  errorMessage?: string
 }
 
 export function FileProcessorUI({ toolId, toolTitle, toolDescription }: ToolUIProps) {
@@ -74,33 +76,36 @@ export function FileProcessorUI({ toolId, toolTitle, toolDescription }: ToolUIPr
     }, 200)
 
     try {
-      const formData = new FormData()
-      formData.append("file", selectedFile)
-      formData.append("toolId", toolId)
-
-      const response = await fetch(`/api/tools/${toolId}`, {
-        method: "POST",
-        body: formData,
-      })
-
-      const result = await response.json()
+      const result = await processFileRequest(toolId, selectedFile)
 
       clearInterval(progressInterval)
       setProgress(100)
 
       if (result.success) {
         setProcessedFile({
-          name: result.data.filename || selectedFile.name,
-          size: result.data.size || selectedFile.size,
-          url: result.data.url || "#",
+          name: selectedFile.name,
+          size: selectedFile.size,
+          url: result.downloadUrl || "#",
           status: "complete",
         })
       } else {
-        setProcessedFile((prev) => (prev ? { ...prev, status: "error" } : null))
+        setProcessedFile({
+          name: selectedFile.name,
+          size: selectedFile.size,
+          url: "",
+          status: "error",
+          errorMessage: result.error,
+        })
       }
     } catch (error) {
       clearInterval(progressInterval)
-      setProcessedFile((prev) => (prev ? { ...prev, status: "error" } : null))
+      setProcessedFile({
+        name: selectedFile.name,
+        size: selectedFile.size,
+        url: "",
+        status: "error",
+        errorMessage: error instanceof Error ? error.message : "File processing failed",
+      })
     }
   }
 
@@ -250,7 +255,16 @@ export function FileProcessorUI({ toolId, toolTitle, toolDescription }: ToolUIPr
                     </div>
                   </div>
 
-                  <Button className="w-full gap-2" onClick={() => window.alert("Download functionality ready!")}>
+                  <Button
+                    className="w-full gap-2"
+                    onClick={() => {
+                      if (processedFile.url && processedFile.url !== "#") {
+                        window.open(processedFile.url, "_blank")
+                      } else {
+                        alert("Download functionality ready for backend integration!")
+                      }
+                    }}
+                  >
                     <Download className="h-4 w-4" />
                     Download Processed File
                   </Button>
@@ -259,9 +273,12 @@ export function FileProcessorUI({ toolId, toolTitle, toolDescription }: ToolUIPr
 
               {processedFile.status === "error" && (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    An error occurred while processing your file. Please try again.
-                  </p>
+                  <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+                    <p className="text-sm font-medium text-destructive mb-2">Backend Connection Error</p>
+                    <p className="text-xs text-muted-foreground">
+                      {processedFile.errorMessage || "An error occurred while processing your file. Please try again."}
+                    </p>
+                  </div>
                   <Button variant="outline" onClick={handleReset} className="w-full bg-transparent">
                     Try Again
                   </Button>

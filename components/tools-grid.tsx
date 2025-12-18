@@ -4,18 +4,37 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ToolCard } from "@/components/tool-card"
-import { TOOL_REGISTRY, getAllCategories, getToolsByCategory, getFeaturedTools } from "@/constants/tool-registry"
+import { getAllCategories, getToolsByCategory, getFeaturedTools, type Tool } from "@/constants/tool-registry"
 
-export function ToolsGrid() {
+interface ToolsGridProps {
+  tools: Tool[]
+}
+
+export function ToolsGrid({ tools }: ToolsGridProps) {
   const [activeCategory, setActiveCategory] = useState<string>("all")
+
   const categories = getAllCategories()
 
   const displayedTools =
     activeCategory === "all"
-      ? TOOL_REGISTRY
+      ? tools
       : activeCategory === "featured"
         ? getFeaturedTools()
         : getToolsByCategory(activeCategory as any)
+
+  if (tools.length === 0) {
+    return (
+      <section id="tools" className="container mx-auto px-4 py-16 md:py-24">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-lg text-muted-foreground">Loading tools from backend...</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Make sure your FastAPI server is running at http://127.0.0.1:8000
+          </p>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section id="tools" className="container mx-auto px-4 py-16 md:py-24">
@@ -28,7 +47,7 @@ export function ToolsGrid() {
       >
         <h2 className="mb-4 text-balance text-4xl font-bold text-foreground md:text-5xl">Explore Our Tools</h2>
         <p className="text-pretty text-lg text-muted-foreground">
-          Browse through our collection of powerful utilities and tools
+          Browse through our collection of {tools.length}+ powerful utilities and AI agents
         </p>
       </motion.div>
 

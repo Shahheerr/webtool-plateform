@@ -4,24 +4,32 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import type { Tool } from "@/constants/tool-registry"
-import { ArrowRight, Sparkles, Code, Search, ImageIcon, Repeat } from "lucide-react"
+import type { Tool, ToolCategory } from "@/constants/tool-registry"
+import { ArrowRight, Sparkles, Code, Search, ImageIcon, Repeat, PenLine, Wrench, type LucideIcon } from "lucide-react"
 
-const categoryIcons = {
+const categoryIcons: Record<ToolCategory, LucideIcon> = {
   AI: Sparkles,
   Dev: Code,
   SEO: Search,
   Image: ImageIcon,
   Converter: Repeat,
+  Writing: PenLine,
+  General: Wrench,
 }
 
-const categoryColors = {
+const categoryColors: Record<ToolCategory, string> = {
   AI: "from-primary to-accent",
   Dev: "from-chart-3 to-chart-4",
   SEO: "from-chart-5 to-primary",
   Image: "from-accent to-chart-2",
   Converter: "from-chart-4 to-chart-5",
+  Writing: "from-purple-500 to-pink-500",
+  General: "from-slate-500 to-zinc-600",
 }
+
+// Default fallback icon and color for unknown categories
+const DEFAULT_ICON = Wrench
+const DEFAULT_COLOR = "from-slate-500 to-zinc-600"
 
 interface ToolCardProps {
   tool: Tool
@@ -29,7 +37,9 @@ interface ToolCardProps {
 }
 
 export function ToolCard({ tool, index }: ToolCardProps) {
-  const Icon = categoryIcons[tool.category]
+  // Safe access with fallback to prevent undefined component errors
+  const Icon = categoryIcons[tool.category] || DEFAULT_ICON
+  const colorGradient = categoryColors[tool.category] || DEFAULT_COLOR
 
   return (
     <motion.div
@@ -41,7 +51,7 @@ export function ToolCard({ tool, index }: ToolCardProps) {
       <Link href={`/tools/${tool.slug}`} className="block h-full">
         <Card className="group relative h-full overflow-hidden border-border/60 bg-card/90 backdrop-blur-sm transition-all duration-300 hover:border-primary/60 hover:shadow-2xl hover:shadow-primary/20 gradient-border">
           <div
-            className={`absolute inset-0 bg-gradient-to-br ${categoryColors[tool.category]} opacity-0 transition-opacity duration-300 group-hover:opacity-10`}
+            className={`absolute inset-0 bg-gradient-to-br ${colorGradient} opacity-0 transition-opacity duration-300 group-hover:opacity-10`}
           />
 
           <CardHeader className="relative">
@@ -49,7 +59,7 @@ export function ToolCard({ tool, index }: ToolCardProps) {
               <motion.div
                 whileHover={{ scale: 1.1, rotate: 5 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${categoryColors[tool.category]} shadow-lg`}
+                className={`flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br ${colorGradient} shadow-lg`}
               >
                 <Icon className="h-5 w-5 text-white" />
               </motion.div>

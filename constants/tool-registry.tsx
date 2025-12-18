@@ -5,7 +5,7 @@
 
 export type ToolArchetype = "text" | "file" | "form"
 
-export type ToolCategory = "AI" | "SEO" | "Dev" | "Image" | "Converter"
+export type ToolCategory = "AI" | "SEO" | "Dev" | "Image" | "Converter" | "Writing" | "General"
 
 export interface Tool {
   id: string
@@ -20,10 +20,57 @@ export interface Tool {
 }
 
 /**
+ * Static fallback registry (used only if API is unavailable)
+ */
+export const STATIC_TOOL_REGISTRY: Tool[] = [
+  {
+    id: "story-generator",
+    title: "Story Generator",
+    slug: "story-generator",
+    description: "Generate creative stories using AI with customizable themes",
+    category: "Writing",
+    archetype: "text",
+    featured: true,
+    tags: ["ai", "creative", "writing"],
+  },
+  {
+    id: "code-beautifier",
+    title: "Code Beautifier",
+    slug: "code-beautifier",
+    description: "Format and beautify your code with syntax highlighting",
+    category: "Dev",
+    archetype: "text",
+    featured: true,
+    tags: ["dev", "code", "formatting"],
+  },
+]
+
+/**
+ * Dynamic tool registry - populated from API at runtime
+ */
+let TOOL_REGISTRY: Tool[] = [...STATIC_TOOL_REGISTRY]
+
+export { TOOL_REGISTRY }
+
+/**
+ * Update the tool registry with dynamically loaded tools
+ */
+export function updateToolRegistry(tools: Tool[]) {
+  TOOL_REGISTRY = tools.length > 0 ? tools : STATIC_TOOL_REGISTRY
+}
+
+/**
+ * Get all tools from registry
+ */
+export function getAllTools(): Tool[] {
+  return TOOL_REGISTRY
+}
+
+/**
  * Complete Tool Registry
  * Add new tools here to automatically integrate them into the platform
  */
-export const TOOL_REGISTRY: Tool[] = [
+TOOL_REGISTRY = [
   // AI Tools
   {
     id: "ai-story-generator",

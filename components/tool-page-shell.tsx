@@ -4,16 +4,21 @@ import type React from "react"
 
 import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
-import type { Tool } from "@/constants/tool-registry"
-import { Sparkles, Code, Search, ImageIcon, Repeat } from "lucide-react"
+import type { Tool, ToolCategory } from "@/constants/tool-registry"
+import { Sparkles, Code, Search, ImageIcon, Repeat, PenLine, Wrench, type LucideIcon } from "lucide-react"
 
-const categoryIcons = {
+const categoryIcons: Record<ToolCategory, LucideIcon> = {
   AI: Sparkles,
   Dev: Code,
   SEO: Search,
   Image: ImageIcon,
   Converter: Repeat,
+  Writing: PenLine,
+  General: Wrench,
 }
+
+// Default fallback icon for unknown categories
+const DEFAULT_ICON = Wrench
 
 interface ToolPageShellProps {
   tool: Tool
@@ -21,7 +26,8 @@ interface ToolPageShellProps {
 }
 
 export function ToolPageShell({ tool, children }: ToolPageShellProps) {
-  const Icon = categoryIcons[tool.category]
+  // Safe access with fallback to prevent undefined component errors
+  const Icon = categoryIcons[tool.category] || DEFAULT_ICON
 
   return (
     <main className="min-h-screen bg-background">
